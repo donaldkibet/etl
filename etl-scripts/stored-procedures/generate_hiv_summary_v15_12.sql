@@ -7,7 +7,7 @@ BEGIN
                     set @total_rows_written = 0;
                     
                     set @start = now();
-                    set @table_version = "flat_hiv_summary_v2.19";
+                    set @table_version = "flat_hiv_summary_v2.20";
 
                     set session sort_buffer_size=512000000;
 
@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS flat_hiv_summary_v15b (
     cur_arv_adherence VARCHAR(200),
     hiv_status_disclosed INT,
     is_pregnant BOOLEAN,
+    menstruation_status INT,
     edd DATETIME,
     tb_screen BOOLEAN,
     tb_screening_result INT,
@@ -367,6 +368,8 @@ SELECT @person_ids_count AS 'num patients to sync';
                         set @cur_arv_adherence = null;
                         set @hiv_status_disclosed = null;
                         set @is_pregnant = null;
+                        set @menstruation_status = null;
+
                         set @edd = null;
                         set @prev_arv_meds = null;
                         set @cur_arv_meds = null;
@@ -1083,7 +1086,28 @@ SELECT @person_ids_count AS 'num patients to sync';
                             end as is_pregnant,
 
 
-                            
+
+                            case
+                                when obs regexp "!!2061=1115!!" then @menstruation_status := 1
+                                when obs regexp "!!2061=2060!!" then @menstruation_status := 2
+                                when obs regexp "!!2061=1116!!" then @menstruation_status := 3
+                                when obs regexp "!!2061=5990!!" then @menstruation_status := 4
+                                when obs regexp "!!2061=6496!!" then @menstruation_status := 5
+                                when obs regexp "!!2061=6497!!" then @menstruation_status := 6
+                                when obs regexp "!!2061=5993!!" then @menstruation_status := 7
+                                when obs regexp "!!2061=2416!!" then @menstruation_status := 8
+                                when obs regexp "!!2061=2415!!" then @menstruation_status := 9
+                                when obs regexp "!!2061=7023!!" then @menstruation_status := 10
+                                when obs regexp "!!2061=127!!" then @menstruation_status := 11
+                                when obs regexp "!!2061=162!!" then @menstruation_status := 12
+                                when obs regexp "!!2061=1461!!" then @menstruation_status := 13
+                                when obs regexp "!!2061=5622!!" then @menstruation_status := 14
+                                when obs regexp "!!2061=5989!!" then @menstruation_status := 15
+                                when @prev_id = @cur_id then @menstruation_status
+                                else @menstruation_status := null
+                            end as menstruation_status,
+
+
                             
                             
                             
@@ -1963,6 +1987,7 @@ SELECT @total_rows_written;
                         cur_arv_adherence,
                         hiv_status_disclosed,
                         is_pregnant,
+                        menstruation_status,
                         edd,
                         tb_screen,
                         tb_screening_result,
